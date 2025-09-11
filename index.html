@@ -3,48 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stalk API Premium</title>
+  <title>Stalk API Console</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center p-6">
-  <div class="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-2xl p-8">
-    <h1 class="text-4xl font-extrabold text-center text-indigo-700">🔍 Stalk API</h1>
-    <p class="text-center text-slate-600 mt-2">Masukkan data sesuai service yang dipilih</p>
+<body class="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+  <div class="bg-white rounded-xl shadow-lg w-full max-w-3xl p-8 border border-gray-200">
+    <h1 class="text-2xl font-bold text-gray-800">Stalk API Console</h1>
+    <p class="text-sm text-gray-500 mt-1">Pilih layanan, isi data, lalu jalankan API</p>
 
-    <!-- Pilihan service -->
+    <!-- Service -->
     <div class="mt-6">
-      <label class="block text-sm font-semibold text-slate-700">Pilih Service</label>
-      <select id="service" class="mt-2 w-full rounded-xl border-gray-300 p-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+      <label class="block text-sm font-medium text-gray-700">Service</label>
+      <select id="service"
+        class="mt-2 w-full rounded-lg border-gray-300 p-3 shadow-sm focus:ring-blue-500 focus:border-blue-500">
         <option value="ff">Free Fire (ID)</option>
         <option value="tiktok">TikTok (Username)</option>
         <option value="roblox">Roblox (Username)</option>
       </select>
     </div>
 
-    <!-- Input username / id -->
+    <!-- Input -->
     <div class="mt-6">
-      <label id="inputLabel" class="block text-sm font-semibold text-slate-700">Masukkan ID</label>
+      <label id="inputLabel" class="block text-sm font-medium text-gray-700">Masukkan ID Free Fire</label>
       <input id="inputValue" type="text" placeholder="contoh: 123456789"
-        class="mt-2 w-full rounded-xl border-gray-300 p-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"/>
+        class="mt-2 w-full rounded-lg border-gray-300 p-3 shadow-sm focus:ring-blue-500 focus:border-blue-500" />
     </div>
 
-    <!-- Tombol -->
-    <div class="flex justify-center gap-4 mt-6">
-      <button onclick="callApi()"
-        class="px-6 py-3 rounded-xl bg-indigo-600 text-white font-semibold shadow-md hover:bg-indigo-700 transition">
-        Call API
-      </button>
+    <!-- Buttons -->
+    <div class="flex justify-end gap-3 mt-6">
       <button onclick="resetForm()"
-        class="px-6 py-3 rounded-xl bg-gray-200 text-slate-700 font-semibold shadow-md hover:bg-gray-300 transition">
+        class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition">
         Reset
       </button>
+      <button onclick="callApi()"
+        class="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium shadow hover:bg-blue-700 transition">
+        Call API
+      </button>
     </div>
 
-    <!-- Hasil -->
+    <!-- Response -->
     <div class="mt-8">
-      <h2 class="text-lg font-bold text-slate-800">Response</h2>
+      <div class="flex justify-between items-center mb-2">
+        <h2 class="text-lg font-semibold text-gray-800">Response</h2>
+        <button id="copyBtn" onclick="copyResponse()"
+          class="text-sm px-3 py-1 rounded-md bg-gray-800 text-white hover:bg-black transition">
+          Salin
+        </button>
+      </div>
       <pre id="response"
-        class="mt-3 min-h-[160px] max-h-96 overflow-auto bg-slate-900 text-green-300 text-sm p-4 rounded-xl shadow-inner whitespace-pre-wrap">
+        class="min-h-[180px] max-h-[400px] overflow-auto bg-gray-900 text-green-300 text-sm p-4 rounded-lg font-mono">
 Belum ada response...
       </pre>
     </div>
@@ -55,6 +62,7 @@ Belum ada response...
     const inputLabel = document.getElementById("inputLabel");
     const inputValue = document.getElementById("inputValue");
     const responseEl = document.getElementById("response");
+    const copyBtn = document.getElementById("copyBtn");
 
     const ENDPOINTS = {
       ff: "https://api.sxtream.xyz/stalk/ffstalk",
@@ -86,7 +94,6 @@ Belum ada response...
         return;
       }
 
-      // Susun query sesuai service
       if (service === "ff") url += `?id=${encodeURIComponent(input)}`;
       if (service === "tiktok") url += `?username=${encodeURIComponent(input)}`;
       if (service === "roblox") url += `?username=${encodeURIComponent(input)}`;
@@ -101,7 +108,7 @@ Belum ada response...
         else data = await res.text();
 
         if (!res.ok) {
-          responseEl.textContent = `❌ Error ${res.status}\\n${JSON.stringify(data, null, 2)}`;
+          responseEl.textContent = `❌ Error ${res.status}\n${JSON.stringify(data, null, 2)}`;
         } else {
           responseEl.textContent = JSON.stringify(data, null, 2);
         }
@@ -113,6 +120,14 @@ Belum ada response...
     function resetForm() {
       inputValue.value = "";
       responseEl.textContent = "Belum ada response...";
+    }
+
+    function copyResponse() {
+      const text = responseEl.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        copyBtn.textContent = "✔ Disalin";
+        setTimeout(() => (copyBtn.textContent = "Salin"), 1500);
+      });
     }
   </script>
 </body>
