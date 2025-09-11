@@ -1,155 +1,109 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
+  <title>AI Hub - LuminAI & Text2Video</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stalk API Console</title>
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 </head>
-<body class="min-h-screen bg-gray-100 flex items-center justify-center p-6">
-  <div class="bg-white rounded-xl shadow-lg w-full max-w-3xl p-8 border border-gray-200">
-    <h1 class="text-2xl font-bold text-gray-800">Stalk API Console</h1>
-    <p class="text-sm text-gray-500 mt-1">Pilih layanan, isi data, lalu jalankan API</p>
+<body class="bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white font-sans min-h-screen flex flex-col">
+  
+  <!-- Header -->
+  <header class="p-6 bg-gradient-to-r from-purple-800 via-indigo-700 to-purple-900 shadow-xl">
+    <h1 class="text-3xl font-bold text-center tracking-wide">✨ AI Hub ✨</h1>
+    <p class="text-center text-gray-300 mt-2">Powered by LuminAI & Text-to-Video</p>
+  </header>
 
-    <!-- Service -->
-    <div class="mt-6">
-      <label class="block text-sm font-medium text-gray-700">Service</label>
-      <select id="service"
-        class="mt-2 w-full rounded-lg border-gray-300 p-3 shadow-sm focus:ring-blue-500 focus:border-blue-500">
-        <option value="ff">Free Fire (ID)</option>
-        <option value="tiktok">TikTok (Username)</option>
-        <option value="roblox">Roblox (Username)</option>
-      </select>
-    </div>
-
-    <!-- Input -->
-    <div class="mt-6">
-      <label id="inputLabel" class="block text-sm font-medium text-gray-700">Masukkan ID Free Fire</label>
-      <input id="inputValue" type="text" placeholder="contoh: 123456789"
-        class="mt-2 w-full rounded-lg border-gray-300 p-3 shadow-sm focus:ring-blue-500 focus:border-blue-500" />
-    </div>
-
-    <!-- Buttons -->
-    <div class="flex justify-end gap-3 mt-6">
-      <button onclick="resetForm()"
-        class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition">
-        Reset
-      </button>
-      <button onclick="callApi()"
-        class="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium shadow hover:bg-blue-700 transition">
-        Call API
-      </button>
-    </div>
-
-    <!-- Response -->
-    <div class="mt-8">
-      <h2 class="text-lg font-semibold text-gray-800">Response</h2>
-      <div id="response"
-        class="mt-3 min-h-[180px] bg-gray-50 text-sm p-4 rounded-lg shadow-inner text-gray-700">
-        Belum ada response...
+  <!-- Main Content -->
+  <main class="flex-1 container mx-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+    
+    <!-- LuminAI Chat -->
+    <section class="bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
+      <h2 class="text-xl font-semibold mb-4">🤖 LuminAI Chat</h2>
+      
+      <div id="chat-box" class="h-80 overflow-y-auto p-4 bg-gray-900 rounded-xl mb-4 space-y-3">
+        <div class="text-gray-400 text-center">Start chatting with AI...</div>
       </div>
-    </div>
-  </div>
+
+      <div class="flex space-x-2">
+        <input id="chat-input" type="text" placeholder="Type your message..." 
+               class="flex-1 p-3 rounded-xl bg-gray-700 text-white outline-none">
+        <button onclick="sendMessage()" 
+                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow">Send</button>
+      </div>
+    </section>
+
+    <!-- Text to Video -->
+    <section class="bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
+      <h2 class="text-xl font-semibold mb-4">🎬 Text to Video</h2>
+      
+      <textarea id="video-text" placeholder="Enter your video idea..."
+                class="w-full p-3 rounded-xl bg-gray-700 text-white outline-none h-32"></textarea>
+      
+      <button onclick="generateVideo()" 
+              class="mt-3 w-full px-4 py-3 bg-pink-600 hover:bg-pink-700 rounded-xl shadow">
+        Generate Video
+      </button>
+
+      <div id="video-result" class="mt-4"></div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="p-4 bg-gray-900 text-center text-gray-500 text-sm border-t border-gray-800">
+    © 2025 AI Hub - Powered by Sxtream API
+  </footer>
 
   <script>
-    const serviceEl = document.getElementById("service");
-    const inputLabel = document.getElementById("inputLabel");
-    const inputValue = document.getElementById("inputValue");
-    const responseEl = document.getElementById("response");
+    // Chat Function
+    async function sendMessage() {
+      const input = document.getElementById("chat-input");
+      const chatBox = document.getElementById("chat-box");
+      const msg = input.value.trim();
+      if (!msg) return;
 
-    const ENDPOINTS = {
-      ff: "https://api.sxtream.xyz/stalk/ffstalk",
-      tiktok: "https://api.sxtream.xyz/stalk/tiktokstalk",
-      roblox: "https://api.sxtream.xyz/stalk/roblox"
-    };
-
-    // Ubah label sesuai service
-    serviceEl.addEventListener("change", () => {
-      if (serviceEl.value === "ff") {
-        inputLabel.textContent = "Masukkan ID Free Fire";
-        inputValue.placeholder = "contoh: 123456789";
-      } else if (serviceEl.value === "tiktok") {
-        inputLabel.textContent = "Masukkan Username TikTok";
-        inputValue.placeholder = "contoh: tiktokuser";
-      } else if (serviceEl.value === "roblox") {
-        inputLabel.textContent = "Masukkan Username Roblox";
-        inputValue.placeholder = "contoh: robloxuser";
-      }
-    });
-
-    async function callApi() {
-      const service = serviceEl.value;
-      const input = inputValue.value.trim();
-      let url = ENDPOINTS[service];
-
-      if (!input) {
-        responseEl.textContent = "❌ Harap isi input terlebih dahulu!";
-        return;
-      }
-
-      if (service === "ff") url += `?id=${encodeURIComponent(input)}`;
-      if (service === "tiktok") url += `?username=${encodeURIComponent(input)}`;
-      if (service === "roblox") url += `?username=${encodeURIComponent(input)}`;
-
-      responseEl.innerHTML = "⏳ Loading...";
+      // User message
+      chatBox.innerHTML += `<div class="text-right"><span class="bg-indigo-600 px-3 py-2 rounded-xl inline-block">${msg}</span></div>`;
+      input.value = "";
+      chatBox.scrollTop = chatBox.scrollHeight;
 
       try {
-        const res = await fetch(url);
-        const data = await res.json();
+        const res = await axios.get(`https://api.sxtream.xyz/ai/luminai?query=${encodeURIComponent(msg)}`);
+        const reply = res.data.result || "No response";
 
-        if (!res.ok) {
-          responseEl.textContent = `❌ Error ${res.status}\n${JSON.stringify(data, null, 2)}`;
-          return;
-        }
-
-        // Render tampilan rapi
-        if (service === "tiktok" && data.result?.user) {
-          const u = data.result.user;
-          const s = data.result.stats;
-          responseEl.innerHTML = `
-            <div class="flex items-center gap-4">
-              <img src="${u.avatarThumb}" class="w-16 h-16 rounded-full border" alt="">
-              <div>
-                <h3 class="font-bold text-lg">${u.nickname}</h3>
-                <p class="text-gray-500">@${u.uniqueId}</p>
-              </div>
-            </div>
-            <div class="grid grid-cols-3 gap-4 mt-4 text-center">
-              <div><span class="font-bold text-lg">${s.followerCount}</span><br><span class="text-sm text-gray-500">Followers</span></div>
-              <div><span class="font-bold text-lg">${s.followingCount}</span><br><span class="text-sm text-gray-500">Following</span></div>
-              <div><span class="font-bold text-lg">${s.heartCount}</span><br><span class="text-sm text-gray-500">Likes</span></div>
-            </div>
-            <p class="mt-4 text-gray-700">${u.signature || "-"}</p>
-          `;
-        } else if (service === "roblox" && data.result?.account) {
-          const a = data.result.account;
-          const s = data.result.stats;
-          responseEl.innerHTML = `
-            <div class="flex items-center gap-4">
-              <img src="${a.profilePicture}" class="w-16 h-16 rounded-full border" alt="">
-              <div>
-                <h3 class="font-bold text-lg">${a.displayName}</h3>
-                <p class="text-gray-500">@${a.username}</p>
-              </div>
-            </div>
-            <div class="grid grid-cols-3 gap-4 mt-4 text-center">
-              <div><span class="font-bold text-lg">${s.friendCount}</span><br><span class="text-sm text-gray-500">Friends</span></div>
-              <div><span class="font-bold text-lg">${s.followers}</span><br><span class="text-sm text-gray-500">Followers</span></div>
-              <div><span class="font-bold text-lg">${s.following}</span><br><span class="text-sm text-gray-500">Following</span></div>
-            </div>
-            <p class="mt-4 text-gray-700">${a.description || "-"}</p>
-          `;
-        } else {
-          responseEl.textContent = JSON.stringify(data, null, 2);
-        }
+        chatBox.innerHTML += `<div class="text-left"><span class="bg-gray-700 px-3 py-2 rounded-xl inline-block">${reply}</span></div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
       } catch (err) {
-        responseEl.textContent = "⚠️ Fetch error: " + err.message;
+        chatBox.innerHTML += `<div class="text-left text-red-500">Error fetching response.</div>`;
       }
     }
 
-    function resetForm() {
-      inputValue.value = "";
-      responseEl.textContent = "Belum ada response...";
+    // Text to Video Function
+    async function generateVideo() {
+      const text = document.getElementById("video-text").value.trim();
+      const resultBox = document.getElementById("video-result");
+      if (!text) return;
+
+      resultBox.innerHTML = `<p class="text-gray-400">⏳ Generating video...</p>`;
+
+      try {
+        const res = await axios.post("https://api.sxtream.xyz/ai/texttovideo", { query: text });
+        const videoUrl = res.data.result || "";
+
+        if (videoUrl) {
+          resultBox.innerHTML = `
+            <video controls class="w-full rounded-xl mt-3 shadow">
+              <source src="${videoUrl}" type="video/mp4">
+              Your browser does not support video.
+            </video>`;
+        } else {
+          resultBox.innerHTML = `<p class="text-red-500">⚠️ Failed to generate video.</p>`;
+        }
+      } catch (err) {
+        resultBox.innerHTML = `<p class="text-red-500">⚠️ Error connecting to API.</p>`;
+      }
     }
   </script>
 </body>
