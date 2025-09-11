@@ -4,109 +4,106 @@
   <meta charset="UTF-8">
   <title>AanzAI Chatroom</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Tailwind CSS -->
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 </head>
-<body class="bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white flex flex-col min-h-screen">
+<body class="bg-gray-950 text-white flex flex-col min-h-screen">
 
   <!-- Header -->
-  <header class="p-4 bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-900 shadow-md text-center">
+  <header class="p-4 bg-gradient-to-r from-purple-700 to-indigo-800 text-center shadow">
     <h1 class="text-2xl font-bold">🤖 AanzAI</h1>
-    <p class="text-gray-300 text-sm">Your personal AI assistant (Chat + Text2Video)</p>
+    <p class="text-gray-300 text-sm">Chat & Text-to-Video Assistant</p>
   </header>
 
-  <!-- Chat Area -->
-  <main class="flex-1 overflow-y-auto p-6" id="chat-box">
-    <div class="text-center text-gray-500">💬 Start chatting with AanzAI...</div>
+  <!-- Chat area -->
+  <main id="chat-box" class="flex-1 overflow-y-auto p-6 space-y-3">
+    <p class="text-gray-500 text-center">💬 Start chatting with AanzAI...</p>
   </main>
 
-  <!-- Input Area -->
-  <div class="p-4 bg-gray-900 border-t border-gray-800 flex space-x-2">
-    <input id="chat-input" 
-           type="text" 
-           placeholder="Type a message... (use #video for text-to-video)" 
-           class="flex-1 p-3 rounded-xl bg-gray-700 text-white outline-none">
+  <!-- Input -->
+  <div class="p-4 bg-gray-900 flex space-x-2 border-t border-gray-800">
+    <input id="chat-input" type="text" 
+           placeholder="Type a message... (#video untuk text-to-video)" 
+           class="flex-1 p-3 rounded-xl bg-gray-800 outline-none">
     <button onclick="sendMessage()" 
-            class="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl font-semibold">Send</button>
+            class="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl">Send</button>
   </div>
 
   <script>
     const chatBox = document.getElementById("chat-box");
     const input = document.getElementById("chat-input");
 
-    function addMessage(sender, text, isVideo = false) {
-      const bubble = document.createElement("div");
-      bubble.className = sender === "user" 
-        ? "text-right my-2"
-        : "text-left my-2";
-
+    function addMessage(sender, content, isVideo = false) {
+      const wrap = document.createElement("div");
+      wrap.className = sender === "user" ? "text-right" : "text-left";
       if (isVideo) {
-        bubble.innerHTML = `
-          <div class="inline-block max-w-lg p-3 rounded-xl bg-gray-800 shadow">
-            <video controls class="rounded-lg shadow-md mt-2">
-              <source src="${text}" type="video/mp4">
-              Your browser does not support video.
+        wrap.innerHTML = `
+          <div class="inline-block bg-gray-800 p-3 rounded-xl max-w-lg">
+            <video controls class="rounded-lg mt-2">
+              <source src="${content}" type="video/mp4">
             </video>
           </div>`;
       } else {
-        bubble.innerHTML = `
-          <div class="inline-block max-w-lg p-3 rounded-xl ${sender === "user" ? "bg-indigo-600" : "bg-gray-800"} shadow">
-            ${text}
+        wrap.innerHTML = `
+          <div class="inline-block ${sender === "user" ? "bg-indigo-600" : "bg-gray-800"} p-3 rounded-xl max-w-lg">
+            ${content}
           </div>`;
       }
-
-      chatBox.appendChild(bubble);
+      chatBox.appendChild(wrap);
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
     async function sendMessage() {
       const msg = input.value.trim();
       if (!msg) return;
-
-      // tampilkan pesan user
       addMessage("user", msg);
       input.value = "";
 
-      // loading bubble
+      // Loading bubble
       const loading = document.createElement("div");
-      loading.className = "text-left my-2";
-      loading.innerHTML = `
-        <div class="inline-block px-3 py-2 rounded-xl bg-gray-800 text-gray-400 italic animate-pulse">
-          AanzAI is typing...
-        </div>`;
+      loading.className = "text-left";
+      loading.innerHTML = `<div class="inline-block bg-gray-800 p-3 rounded-xl text-gray-400 italic">AanzAI is typing...</div>`;
       chatBox.appendChild(loading);
       chatBox.scrollTop = chatBox.scrollHeight;
 
       try {
+        let response, data;
+
         if (msg.startsWith("#video")) {
           const query = msg.replace("#video", "").trim();
-          const res = await axios.post("https://api.sxtream.xyz/ai/texttovideo", { query });
-          chatBox.removeChild(loading);
+          response = await fetch("https://api.sxtream.xyz/ai/texttovideo", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query })
+          });
+        } else {
+          response = await fetch(`https://api.sxtream.xyz/ai/luminai?query=${encodeURIComponent(msg)}`);
+        }
 
-          if (res.data.result) {
-            addMessage("bot", res.data.result, true);
+        data = await response.json();
+        console.log("API Response:", data); // DEBUG log
+
+        chatBox.removeChild(loading);
+
+        if (msg.startsWith("#video")) {
+          if (data.result) {
+            addMessage("bot", data.result, true);
           } else {
-            addMessage("bot", "⚠️ Failed to generate video.");
+            addMessage("bot", "⚠️ Video generation failed.");
           }
         } else {
-          const res = await axios.get(`https://api.sxtream.xyz/ai/luminai?query=${encodeURIComponent(msg)}`);
-          chatBox.removeChild(loading);
-
-          if (res.data.result) {
-            addMessage("bot", res.data.result);
-          } else {
-            addMessage("bot", "⚠️ No response from AanzAI.");
-          }
+          addMessage("bot", data.result || "⚠️ No response.");
         }
-      } catch (e) {
+
+      } catch (err) {
+        console.error("API Error:", err);
         chatBox.removeChild(loading);
-        addMessage("bot", "⚠️ Error connecting to AanzAI.");
+        addMessage("bot", "⚠️ Error connecting to API (CORS mungkin block).");
       }
     }
 
-    // Enter key support
-    input.addEventListener("keypress", function(e) {
+    // Enter support
+    input.addEventListener("keypress", e => {
       if (e.key === "Enter") sendMessage();
     });
   </script>
