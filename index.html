@@ -3,87 +3,95 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stalk API Demo</title>
+  <title>Stalk API Premium</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-50 min-h-screen p-6">
-  <div class="max-w-4xl mx-auto">
-    <header class="mb-6">
-      <h1 class="text-3xl font-extrabold">Stalk API Demo</h1>
-      <p class="mt-2 text-sm text-slate-600">
-        Pilih layanan, masukkan query string (mis. <code>id=123</code> atau <code>username=abc</code>), lalu klik <b>Call API</b>.
-      </p>
-    </header>
+<body class="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center p-6">
+  <div class="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-2xl p-8">
+    <h1 class="text-4xl font-extrabold text-center text-indigo-700">🔍 Stalk API</h1>
+    <p class="text-center text-slate-600 mt-2">Masukkan data sesuai service yang dipilih</p>
 
-    <main class="bg-white shadow-md rounded-2xl p-6">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <div class="col-span-2">
-          <label class="block text-sm font-medium text-slate-700">Service</label>
-          <select id="service" class="mt-1 block w-full rounded-lg border-gray-200 shadow-sm p-2">
-            <option value="https://api.sxtream.xyz/stalk/ffstalk">Free Fire (ffstalk)</option>
-            <option value="https://api.sxtream.xyz/stalk/tiktokstalk">TikTok (tiktokstalk)</option>
-            <option value="https://api.sxtream.xyz/stalk/roblox">Roblox (roblox)</option>
-          </select>
+    <!-- Pilihan service -->
+    <div class="mt-6">
+      <label class="block text-sm font-semibold text-slate-700">Pilih Service</label>
+      <select id="service" class="mt-2 w-full rounded-xl border-gray-300 p-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+        <option value="ff">Free Fire (ID)</option>
+        <option value="tiktok">TikTok (Username)</option>
+        <option value="roblox">Roblox (Username)</option>
+      </select>
+    </div>
 
-          <label class="block text-sm font-medium text-slate-700 mt-3">Query string</label>
-          <input id="query" placeholder="id=123 atau username=someuser"
-            class="mt-1 block w-full rounded-lg border-gray-200 shadow-sm p-2" />
+    <!-- Input username / id -->
+    <div class="mt-6">
+      <label id="inputLabel" class="block text-sm font-semibold text-slate-700">Masukkan ID</label>
+      <input id="inputValue" type="text" placeholder="contoh: 123456789"
+        class="mt-2 w-full rounded-xl border-gray-300 p-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"/>
+    </div>
 
-          <div class="flex gap-2 mt-3">
-            <button onclick="callApi()"
-              class="px-4 py-2 rounded-lg bg-slate-900 text-white hover:opacity-90">
-              Call API
-            </button>
-            <button onclick="fillExample()"
-              class="px-4 py-2 rounded-lg border border-slate-200 bg-white">
-              Isi contoh
-            </button>
-            <a id="endpointLink" href="#" target="_blank"
-              class="px-4 py-2 rounded-lg border border-slate-200 bg-white">
-              Buka endpoint
-            </a>
-          </div>
-        </div>
+    <!-- Tombol -->
+    <div class="flex justify-center gap-4 mt-6">
+      <button onclick="callApi()"
+        class="px-6 py-3 rounded-xl bg-indigo-600 text-white font-semibold shadow-md hover:bg-indigo-700 transition">
+        Call API
+      </button>
+      <button onclick="resetForm()"
+        class="px-6 py-3 rounded-xl bg-gray-200 text-slate-700 font-semibold shadow-md hover:bg-gray-300 transition">
+        Reset
+      </button>
+    </div>
 
-        <div class="col-span-1">
-          <h3 class="text-sm font-semibold">Quick info</h3>
-          <ul class="mt-2 text-sm text-slate-600 space-y-2">
-            <li>Masukkan query string sesuai API (id / username / api_key)</li>
-            <li>Jika <b>CORS error</b>, butuh proxy serverless.</li>
-          </ul>
-        </div>
-      </div>
-
-      <section>
-        <h2 class="text-lg font-semibold mb-2">Response</h2>
-        <div id="response"
-          class="min-h-[160px] p-4 rounded-lg border border-slate-100 bg-slate-50 text-sm text-slate-700 whitespace-pre-wrap">
-          Belum ada response — panggil API untuk melihat hasil.
-        </div>
-      </section>
-    </main>
+    <!-- Hasil -->
+    <div class="mt-8">
+      <h2 class="text-lg font-bold text-slate-800">Response</h2>
+      <pre id="response"
+        class="mt-3 min-h-[160px] max-h-96 overflow-auto bg-slate-900 text-green-300 text-sm p-4 rounded-xl shadow-inner whitespace-pre-wrap">
+Belum ada response...
+      </pre>
+    </div>
   </div>
 
   <script>
-    const serviceEl = document.getElementById('service');
-    const queryEl = document.getElementById('query');
-    const responseEl = document.getElementById('response');
-    const endpointLink = document.getElementById('endpointLink');
+    const serviceEl = document.getElementById("service");
+    const inputLabel = document.getElementById("inputLabel");
+    const inputValue = document.getElementById("inputValue");
+    const responseEl = document.getElementById("response");
 
-    serviceEl.addEventListener('change', () => {
-      endpointLink.href = serviceEl.value;
+    const ENDPOINTS = {
+      ff: "https://api.sxtream.xyz/stalk/ffstalk",
+      tiktok: "https://api.sxtream.xyz/stalk/tiktokstalk",
+      roblox: "https://api.sxtream.xyz/stalk/roblox"
+    };
+
+    // Ubah label sesuai service
+    serviceEl.addEventListener("change", () => {
+      if (serviceEl.value === "ff") {
+        inputLabel.textContent = "Masukkan ID Free Fire";
+        inputValue.placeholder = "contoh: 123456789";
+      } else if (serviceEl.value === "tiktok") {
+        inputLabel.textContent = "Masukkan Username TikTok";
+        inputValue.placeholder = "contoh: tiktokuser";
+      } else if (serviceEl.value === "roblox") {
+        inputLabel.textContent = "Masukkan Username Roblox";
+        inputValue.placeholder = "contoh: robloxuser";
+      }
     });
-    endpointLink.href = serviceEl.value;
-
-    function fillExample() {
-      if (serviceEl.value.includes("ffstalk")) queryEl.value = "id=123";
-      else if (serviceEl.value.includes("tiktok")) queryEl.value = "username=someuser";
-      else if (serviceEl.value.includes("roblox")) queryEl.value = "username=someuser";
-    }
 
     async function callApi() {
-      const url = serviceEl.value + (queryEl.value.trim() ? "?" + queryEl.value.trim() : "");
-      responseEl.textContent = "Loading...";
+      const service = serviceEl.value;
+      const input = inputValue.value.trim();
+      let url = ENDPOINTS[service];
+
+      if (!input) {
+        responseEl.textContent = "❌ Harap isi input terlebih dahulu!";
+        return;
+      }
+
+      // Susun query sesuai service
+      if (service === "ff") url += `?id=${encodeURIComponent(input)}`;
+      if (service === "tiktok") url += `?username=${encodeURIComponent(input)}`;
+      if (service === "roblox") url += `?username=${encodeURIComponent(input)}`;
+
+      responseEl.textContent = "⏳ Loading...";
 
       try {
         const res = await fetch(url);
@@ -93,13 +101,18 @@
         else data = await res.text();
 
         if (!res.ok) {
-          responseEl.textContent = "Error " + res.status + "\\n" + JSON.stringify(data, null, 2);
+          responseEl.textContent = `❌ Error ${res.status}\\n${JSON.stringify(data, null, 2)}`;
         } else {
-          responseEl.textContent = typeof data === "string" ? data : JSON.stringify(data, null, 2);
+          responseEl.textContent = JSON.stringify(data, null, 2);
         }
       } catch (err) {
-        responseEl.textContent = "Fetch error: " + err.message;
+        responseEl.textContent = "⚠️ Fetch error: " + err.message;
       }
+    }
+
+    function resetForm() {
+      inputValue.value = "";
+      responseEl.textContent = "Belum ada response...";
     }
   </script>
 </body>
