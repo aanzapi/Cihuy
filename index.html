@@ -2,109 +2,113 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>AI Hub - LuminAI & Text2Video</title>
+  <title>AanzAI Chatroom</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Tailwind CSS CDN -->
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 </head>
-<body class="bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white font-sans min-h-screen flex flex-col">
-  
+<body class="bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white flex flex-col min-h-screen">
+
   <!-- Header -->
-  <header class="p-6 bg-gradient-to-r from-purple-800 via-indigo-700 to-purple-900 shadow-xl">
-    <h1 class="text-3xl font-bold text-center tracking-wide">✨ AI Hub ✨</h1>
-    <p class="text-center text-gray-300 mt-2">Powered by LuminAI & Text-to-Video</p>
+  <header class="p-4 bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-900 shadow-md text-center">
+    <h1 class="text-2xl font-bold">🤖 AanzAI</h1>
+    <p class="text-gray-300 text-sm">Your personal AI assistant (Chat + Text2Video)</p>
   </header>
 
-  <!-- Main Content -->
-  <main class="flex-1 container mx-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-    
-    <!-- LuminAI Chat -->
-    <section class="bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
-      <h2 class="text-xl font-semibold mb-4">🤖 LuminAI Chat</h2>
-      
-      <div id="chat-box" class="h-80 overflow-y-auto p-4 bg-gray-900 rounded-xl mb-4 space-y-3">
-        <div class="text-gray-400 text-center">Start chatting with AI...</div>
-      </div>
-
-      <div class="flex space-x-2">
-        <input id="chat-input" type="text" placeholder="Type your message..." 
-               class="flex-1 p-3 rounded-xl bg-gray-700 text-white outline-none">
-        <button onclick="sendMessage()" 
-                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow">Send</button>
-      </div>
-    </section>
-
-    <!-- Text to Video -->
-    <section class="bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-700">
-      <h2 class="text-xl font-semibold mb-4">🎬 Text to Video</h2>
-      
-      <textarea id="video-text" placeholder="Enter your video idea..."
-                class="w-full p-3 rounded-xl bg-gray-700 text-white outline-none h-32"></textarea>
-      
-      <button onclick="generateVideo()" 
-              class="mt-3 w-full px-4 py-3 bg-pink-600 hover:bg-pink-700 rounded-xl shadow">
-        Generate Video
-      </button>
-
-      <div id="video-result" class="mt-4"></div>
-    </section>
+  <!-- Chat Area -->
+  <main class="flex-1 overflow-y-auto p-6" id="chat-box">
+    <div class="text-center text-gray-500">💬 Start chatting with AanzAI...</div>
   </main>
 
-  <!-- Footer -->
-  <footer class="p-4 bg-gray-900 text-center text-gray-500 text-sm border-t border-gray-800">
-    © 2025 AI Hub - Powered by Sxtream API
-  </footer>
+  <!-- Input Area -->
+  <div class="p-4 bg-gray-900 border-t border-gray-800 flex space-x-2">
+    <input id="chat-input" 
+           type="text" 
+           placeholder="Type a message... (use #video for text-to-video)" 
+           class="flex-1 p-3 rounded-xl bg-gray-700 text-white outline-none">
+    <button onclick="sendMessage()" 
+            class="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl font-semibold">Send</button>
+  </div>
 
   <script>
-    // Chat Function
+    const chatBox = document.getElementById("chat-box");
+    const input = document.getElementById("chat-input");
+
+    function addMessage(sender, text, isVideo = false) {
+      const bubble = document.createElement("div");
+      bubble.className = sender === "user" 
+        ? "text-right my-2"
+        : "text-left my-2";
+
+      if (isVideo) {
+        bubble.innerHTML = `
+          <div class="inline-block max-w-lg p-3 rounded-xl bg-gray-800 shadow">
+            <video controls class="rounded-lg shadow-md mt-2">
+              <source src="${text}" type="video/mp4">
+              Your browser does not support video.
+            </video>
+          </div>`;
+      } else {
+        bubble.innerHTML = `
+          <div class="inline-block max-w-lg p-3 rounded-xl ${sender === "user" ? "bg-indigo-600" : "bg-gray-800"} shadow">
+            ${text}
+          </div>`;
+      }
+
+      chatBox.appendChild(bubble);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
     async function sendMessage() {
-      const input = document.getElementById("chat-input");
-      const chatBox = document.getElementById("chat-box");
       const msg = input.value.trim();
       if (!msg) return;
 
-      // User message
-      chatBox.innerHTML += `<div class="text-right"><span class="bg-indigo-600 px-3 py-2 rounded-xl inline-block">${msg}</span></div>`;
+      // tampilkan pesan user
+      addMessage("user", msg);
       input.value = "";
+
+      // loading bubble
+      const loading = document.createElement("div");
+      loading.className = "text-left my-2";
+      loading.innerHTML = `
+        <div class="inline-block px-3 py-2 rounded-xl bg-gray-800 text-gray-400 italic animate-pulse">
+          AanzAI is typing...
+        </div>`;
+      chatBox.appendChild(loading);
       chatBox.scrollTop = chatBox.scrollHeight;
 
       try {
-        const res = await axios.get(`https://api.sxtream.xyz/ai/luminai?query=${encodeURIComponent(msg)}`);
-        const reply = res.data.result || "No response";
+        if (msg.startsWith("#video")) {
+          const query = msg.replace("#video", "").trim();
+          const res = await axios.post("https://api.sxtream.xyz/ai/texttovideo", { query });
+          chatBox.removeChild(loading);
 
-        chatBox.innerHTML += `<div class="text-left"><span class="bg-gray-700 px-3 py-2 rounded-xl inline-block">${reply}</span></div>`;
-        chatBox.scrollTop = chatBox.scrollHeight;
-      } catch (err) {
-        chatBox.innerHTML += `<div class="text-left text-red-500">Error fetching response.</div>`;
-      }
-    }
-
-    // Text to Video Function
-    async function generateVideo() {
-      const text = document.getElementById("video-text").value.trim();
-      const resultBox = document.getElementById("video-result");
-      if (!text) return;
-
-      resultBox.innerHTML = `<p class="text-gray-400">⏳ Generating video...</p>`;
-
-      try {
-        const res = await axios.post("https://api.sxtream.xyz/ai/texttovideo", { query: text });
-        const videoUrl = res.data.result || "";
-
-        if (videoUrl) {
-          resultBox.innerHTML = `
-            <video controls class="w-full rounded-xl mt-3 shadow">
-              <source src="${videoUrl}" type="video/mp4">
-              Your browser does not support video.
-            </video>`;
+          if (res.data.result) {
+            addMessage("bot", res.data.result, true);
+          } else {
+            addMessage("bot", "⚠️ Failed to generate video.");
+          }
         } else {
-          resultBox.innerHTML = `<p class="text-red-500">⚠️ Failed to generate video.</p>`;
+          const res = await axios.get(`https://api.sxtream.xyz/ai/luminai?query=${encodeURIComponent(msg)}`);
+          chatBox.removeChild(loading);
+
+          if (res.data.result) {
+            addMessage("bot", res.data.result);
+          } else {
+            addMessage("bot", "⚠️ No response from AanzAI.");
+          }
         }
-      } catch (err) {
-        resultBox.innerHTML = `<p class="text-red-500">⚠️ Error connecting to API.</p>`;
+      } catch (e) {
+        chatBox.removeChild(loading);
+        addMessage("bot", "⚠️ Error connecting to AanzAI.");
       }
     }
+
+    // Enter key support
+    input.addEventListener("keypress", function(e) {
+      if (e.key === "Enter") sendMessage();
+    });
   </script>
 </body>
 </html>
