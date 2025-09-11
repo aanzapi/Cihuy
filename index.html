@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>VirtuSim API UI — Single File</title>
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#94a3b8; --accent:#60a5fa;
+      --glass: rgba(255,255,255,0.03);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:Inter,ui-sans-serif,system-ui,Arial; background:
+      linear-gradient(180deg,#071025 0%, #071027 50%, #061323 100%); color:#e6eef8;
+      padding:24px;
+    }
+    header{display:flex;gap:16px;align-items:center;margin-bottom:18px}
+    h1{font-size:18px;margin:0}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+    .grid{display:grid;grid-template-columns:360px 1fr;gap:18px}
+    .card{background:var(--card);padding:16px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+    input,select,button{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);color:inherit;font-size:14px}
+    .controls{display:flex;gap:8px;margin-top:8px}
+    button.primary{background:linear-gradient(90deg,var(--accent),#3b82f6);border:none;color:#022239;font-weight:600;cursor:pointer}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);cursor:pointer}
+    pre{background:var(--glass);padding:12px;border-radius:10px;overflow:auto;max-height:60vh;color:#dbeafe;font-size:13px}
+    .small{font-size:12px;color:var(--muted)}
+    .row{display:flex;gap:8px;align-items:center}
+    .footer{margin-top:12px;color:var(--muted);font-size:12px}
+    .actions-list{display:grid;gap:10px;margin-top:10px}
+    .inline{display:inline-block;width:auto}
+    .split{display:flex;gap:8px}
+    .topline{display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .success{color:#86efac}
+    .error{color:#fda4af}
+    @media (max-width:880px){
+      .grid{grid-template-columns:1fr; padding-bottom:60px}
+      .card{padding:12px}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>VirtuSim API UI — index.html</h1>
+      <p class="lead">Single-file UI untuk memanggil endpoint: <span class="small">detail_order, set_status, status, reactive_order, order</span></p>
+    </div>
+    <div style="margin-left:auto;text-align:right">
+      <div class="small">API Key (dari kamu)</div>
+      <div style="font-family:monospace; margin-top:6px; background:rgba(255,255,255,0.02); padding:6px 10px; border-radius:8px;">
+        ZfjkKY4T9Re52PSAabO3FDB1U8nIic
+      </div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- LEFT: actions -->
+    <div class="card" id="left">
+      <div class="topline">
+        <div><strong>Actions</strong></div>
+        <div class="small">Base: <code>https://virtusim.com/api/v2/json.php</code></div>
+      </div>
+
+      <!-- detail_order -->
+      <div style="margin-top:12px">
+        <label>detail_order — order id</label>
+        <div class="split">
+          <input id="detail_id" placeholder="contoh: 123" />
+          <button class="primary" onclick="doDetail()">DETAIL</button>
+        </div>
+      </div>
+
+      <!-- set_status -->
+      <div style="margin-top:12px">
+        <label>set_status — order id + status (1 = active / check API)</label>
+        <div class="split">
+          <input id="set_id" placeholder="contoh: 269046" />
+          <input id="set_status_val" placeholder="status (mis. 1)" style="width:110px"/>
+          <button class="primary" onclick="doSetStatus()">SET</button>
+        </div>
+        <div class="small" style="margin-top:6px">Jika ingin contoh: id=269046 status=1</div>
+      </div>
+
+      <!-- status -->
+      <div style="margin-top:12px">
+        <label>status — cek status order (id)</label>
+        <div class="split">
+          <input id="status_id" placeholder="contoh: 885887" />
+          <button class="primary" onclick="doStatus()">CHECK</button>
+        </div>
+      </div>
+
+      <!-- reactive_order -->
+      <div style="margin-top:12px">
+        <label>reactive_order — order id</label>
+        <div class="split">
+          <input id="reactive_id" placeholder="contoh: 123123" />
+          <button class="primary" onclick="doReactive()">REACTIVATE</button>
+        </div>
+      </div>
+
+      <!-- order -->
+      <div style="margin-top:12px">
+        <label>order — service + operator (operator optional)</label>
+        <div style="display:grid;grid-template-columns:1fr 140px;gap:8px">
+          <input id="order_service" placeholder="service id (contoh: 743)" />
+          <select id="order_operator">
+            <option value="any">operator: any</option>
+            <option value="telkomsel">telkomsel</option>
+            <option value="indosat">indosat</option>
+            <option value="xl">xl</option>
+            <option value="tri">tri</option>
+            <option value="axis">axis</option>
+          </select>
+        </div>
+        <div class="controls">
+          <button class="primary" onclick="doOrder()">ORDER</button>
+          <button class="ghost" onclick="prefillOrderExample()">Isi contoh</button>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="small">Tips: beberapa API memerlukan parameter tambahan (mis. phone, qty). Kalau error coba lihat response JSON yang muncul di panel kanan.</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: output -->
+    <div class="card" id="right">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div>
+          <strong>Response</strong>
+          <div class="small" id="lastRequest">Belum ada request</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="ghost" onclick="copyOutput()">Copy</button>
+          <button class="ghost" onclick="downloadOutput()">Download</button>
+          <button class="ghost" onclick="clearOutput()">Clear</button>
+        </div>
+      </div>
+
+      <div style="margin-top:10px">
+        <pre id="output">{ "ready": true }</pre>
+      </div>
+
+      <div style="margin-top:12px">
+        <label>Raw URL (preview)</label>
+        <input id="preview_url" readonly />
+      </div>
+
+      <details style="margin-top:12px">
+        <summary>Log singkat</summary>
+        <pre id="log" style="max-height:160px">No logs yet.</pre>
+      </details>
+    </div>
+  </div>
+
+  <script>
+    // ============================
+    // CONFIG / helper
+    // ============================
+    const API_BASE = 'https://virtusim.com/api/v2/json.php';
+    const API_KEY  = 'ZfjkKY4T9Re52PSAabO3FDB1U8nIic';
+
+    function log(msg){
+      const el = document.getElementById('log');
+      const now = new Date().toLocaleString();
+      el.textContent = now + ' — ' + msg + '\\n' + el.textContent;
+    }
+
+    function setOutput(obj, url){
+      const out = document.getElementById('output');
+      out.textContent = JSON.stringify(obj, null, 2);
+      document.getElementById('preview_url').value = url || '';
+      const last = document.getElementById('lastRequest');
+      last.textContent = 'Last: ' + (new Date()).toLocaleString();
+    }
+
+    function showError(err, url){
+      setOutput({ error: String(err) }, url);
+      log('ERROR: ' + err);
+    }
+
+    function buildUrl(params){
+      const url = new URL(API_BASE);
+      url.searchParams.set('api_key', API_KEY);
+      for(const k in params) {
+        if(params[k] !== undefined && params[k] !== '' && params[k] !== null){
+          url.searchParams.set(k, params[k]);
+        }
+      }
+      return url.toString();
+    }
+
+    async function fetchJson(url, opts = {}){
+      log('Request -> ' + url);
+      try{
+        const res = await fetch(url, opts);
+        const text = await res.text();
+        // try parse JSON, else return text
+        try { const j = JSON.parse(text); log('Response OK'); return j; }
+        catch(e){ log('Response not JSON'); return { raw: text, status: res.status }; }
+      }catch(e){
+        throw e;
+      }
+    }
+
+    // ============================
+    // Actions
+    // ============================
+    async function doDetail(){
+      const id = document.getElementById('detail_id').value.trim();
+      if(!id){ alert('Masukkan order id di kiri.'); return; }
+      const url = buildUrl({ action: 'detail_order', id });
+      try{
+        const data = await fetchJson(url);
+        setOutput(data, url);
+      }catch(e){ showError(e, url); }
+    }
+
+    async function doSetStatus(){
+      const id = document.getElementById('set_id').value.trim();
+      const status = document.getElementById('set_status_val').value.trim();
+      if(!id || !status){ alert('Isi id dan status.'); return; }
+      const url = buildUrl({ action: 'set_status', id, status });
+      try{
+        const data = await fetchJson(url, { method:'GET' });
+        setOutput(data, url);
+      }catch(e){ showError(e, url); }
+    }
+
+    async function doStatus(){
+      const id = document.getElementById('status_id').value.trim();
+      if(!id){ alert('Masukkan order id.'); return; }
+      const url = buildUrl({ action: 'status', id });
+      try{
+        const data = await fetchJson(url);
+        setOutput(data, url);
+      }catch(e){ showError(e, url); }
+    }
+
+    async function doReactive(){
+      const id = document.getElementById('reactive_id').value.trim();
+      if(!id){ alert('Masukkan order id.'); return; }
+      const url = buildUrl({ action: 'reactive_order', id });
+      try{
+        const data = await fetchJson(url);
+        setOutput(data, url);
+      }catch(e){ showError(e, url); }
+    }
+
+    async function doOrder(){
+      const service = document.getElementById('order_service').value.trim();
+      const operator = document.getElementById('order_operator').value;
+      if(!service){ alert('Masukkan service id.'); return; }
+      // NOTE: many "order" endpoints normally require additional params (phone, qty, link...) — user can adapt
+      const url = buildUrl({ action: 'order', service, operator });
+      try{
+        const data = await fetchJson(url, { method:'GET' });
+        setOutput(data, url);
+      }catch(e){ showError(e, url); }
+    }
+
+    // helper: fill example
+    function prefillOrderExample(){
+      document.getElementById('order_service').value = '743';
+      document.getElementById('order_operator').value = 'any';
+      log('Prefilled order example (service=743, operator=any)');
+    }
+
+    // output helpers
+    function copyOutput(){
+      const text = document.getElementById('output').textContent;
+      navigator.clipboard?.writeText(text).then(()=> {
+        alert('Copied JSON to clipboard');
+      }).catch(()=> alert('Gagal copy — browser mungkin tidak mengizinkan.'));
+    }
+
+    function downloadOutput(){
+      const text = document.getElementById('output').textContent;
+      const blob = new Blob([text], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'virtusim-response.json'; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function clearOutput(){
+      document.getElementById('output').textContent = '{}';
+      document.getElementById('preview_url').value = '';
+      log('Cleared output');
+    }
+
+    // initial
+    (function init(){
+      document.getElementById('detail_id').value = '123';
+      document.getElementById('set_id').value = '269046';
+      document.getElementById('set_status_val').value = '1';
+      document.getElementById('status_id').value = '885887';
+      document.getElementById('reactive_id').value = '123123';
+      document.getElementById('order_service').value = '743';
+      document.getElementById('order_operator').value = 'any';
+      log('UI ready');
+    })();
+  </script>
+</body>
+</html>
