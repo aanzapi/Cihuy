@@ -7,26 +7,26 @@
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-950 text-white flex flex-col min-h-screen">
+<body class="bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white flex flex-col min-h-screen">
 
   <!-- Header -->
-  <header class="p-4 bg-gradient-to-r from-purple-700 to-indigo-800 text-center shadow">
-    <h1 class="text-2xl font-bold">🤖 AanzAI</h1>
+  <header class="p-4 bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-900 shadow-md text-center rounded-b-2xl">
+    <h1 class="text-3xl font-bold tracking-wide">🤖 AanzAI</h1>
     <p class="text-gray-300 text-sm">Chat & Text-to-Video Assistant</p>
   </header>
 
   <!-- Chat area -->
-  <main id="chat-box" class="flex-1 overflow-y-auto p-6 space-y-3">
-    <p class="text-gray-500 text-center">💬 Start chatting with AanzAI...</p>
+  <main id="chat-box" class="flex-1 overflow-y-auto p-6 space-y-4">
+    <p class="text-gray-500 text-center italic">💬 Start chatting with AanzAI...</p>
   </main>
 
   <!-- Input -->
-  <div class="p-4 bg-gray-900 flex space-x-2 border-t border-gray-800">
+  <div class="p-4 bg-gray-900 flex space-x-3 border-t border-gray-800 rounded-t-2xl">
     <input id="chat-input" type="text" 
            placeholder="Type a message... (#video untuk text-to-video)" 
-           class="flex-1 p-3 rounded-xl bg-gray-800 outline-none">
+           class="flex-1 p-3 rounded-2xl bg-gray-800 outline-none border border-gray-700 focus:ring-2 focus:ring-indigo-500">
     <button onclick="sendMessage()" 
-            class="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl">Send</button>
+            class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-2xl font-semibold shadow-lg">Send</button>
   </div>
 
   <script>
@@ -35,17 +35,21 @@
 
     function addMessage(sender, content, isVideo = false) {
       const wrap = document.createElement("div");
-      wrap.className = sender === "user" ? "text-right" : "text-left";
+      wrap.className = sender === "user" ? "flex justify-end" : "flex justify-start";
+
       if (isVideo) {
         wrap.innerHTML = `
-          <div class="inline-block bg-gray-800 p-3 rounded-xl max-w-lg">
-            <video controls class="rounded-lg mt-2">
+          <div class="bg-gray-800 rounded-2xl p-3 shadow-lg max-w-md">
+            <video controls class="rounded-xl shadow-md">
               <source src="${content}" type="video/mp4">
             </video>
           </div>`;
       } else {
         wrap.innerHTML = `
-          <div class="inline-block ${sender === "user" ? "bg-indigo-600" : "bg-gray-800"} p-3 rounded-xl max-w-lg">
+          <div class="${sender === "user" 
+              ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white" 
+              : "bg-gray-800 text-gray-200"} 
+              rounded-2xl px-4 py-3 shadow max-w-md">
             ${content}
           </div>`;
       }
@@ -61,44 +65,40 @@
 
       // Loading bubble
       const loading = document.createElement("div");
-      loading.className = "text-left";
-      loading.innerHTML = `<div class="inline-block bg-gray-800 p-3 rounded-xl text-gray-400 italic">AanzAI is typing...</div>`;
+      loading.className = "flex justify-start";
+      loading.innerHTML = `
+        <div class="bg-gray-800 rounded-2xl px-4 py-3 text-gray-400 italic animate-pulse shadow">
+          AanzAI is typing...
+        </div>`;
       chatBox.appendChild(loading);
       chatBox.scrollTop = chatBox.scrollHeight;
 
       try {
-        let response, data;
-
+        let response;
         if (msg.startsWith("#video")) {
           const query = msg.replace("#video", "").trim();
-          response = await fetch("https://api.sxtream.xyz/ai/texttovideo", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ query })
-          });
+          response = await fetch(`/api/aanzai?mode=video&query=${encodeURIComponent(query)}`);
         } else {
-          response = await fetch(`https://api.sxtream.xyz/ai/luminai?query=${encodeURIComponent(msg)}`);
+          response = await fetch(`/api/aanzai?query=${encodeURIComponent(msg)}`);
         }
 
-        data = await response.json();
-        console.log("API Response:", data); // DEBUG log
-
+        const data = await response.json();
         chatBox.removeChild(loading);
 
         if (msg.startsWith("#video")) {
-          if (data.result) {
-            addMessage("bot", data.result, true);
+          if (data.data || data.result) {
+            addMessage("bot", data.data || data.result, true);
           } else {
             addMessage("bot", "⚠️ Video generation failed.");
           }
         } else {
-          addMessage("bot", data.result || "⚠️ No response.");
+          addMessage("bot", data.data || data.result || "⚠️ No response.");
         }
 
       } catch (err) {
         console.error("API Error:", err);
         chatBox.removeChild(loading);
-        addMessage("bot", "⚠️ Error connecting to API (CORS mungkin block).");
+        addMessage("bot", "⚠️ Error connecting to AanzAI.");
       }
     }
 
