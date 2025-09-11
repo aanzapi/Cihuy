@@ -43,17 +43,11 @@
 
     <!-- Response -->
     <div class="mt-8">
-      <div class="flex justify-between items-center mb-2">
-        <h2 class="text-lg font-semibold text-gray-800">Response</h2>
-        <button id="copyBtn" onclick="copyResponse()"
-          class="text-sm px-3 py-1 rounded-md bg-gray-800 text-white hover:bg-black transition">
-          Salin
-        </button>
+      <h2 class="text-lg font-semibold text-gray-800">Response</h2>
+      <div id="response"
+        class="mt-3 min-h-[180px] bg-gray-50 text-sm p-4 rounded-lg shadow-inner text-gray-700">
+        Belum ada response...
       </div>
-      <pre id="response"
-        class="min-h-[180px] max-h-[400px] overflow-auto bg-gray-900 text-green-300 text-sm p-4 rounded-lg font-mono">
-Belum ada response...
-      </pre>
     </div>
   </div>
 
@@ -62,7 +56,6 @@ Belum ada response...
     const inputLabel = document.getElementById("inputLabel");
     const inputValue = document.getElementById("inputValue");
     const responseEl = document.getElementById("response");
-    const copyBtn = document.getElementById("copyBtn");
 
     const ENDPOINTS = {
       ff: "https://api.sxtream.xyz/stalk/ffstalk",
@@ -98,17 +91,54 @@ Belum ada response...
       if (service === "tiktok") url += `?username=${encodeURIComponent(input)}`;
       if (service === "roblox") url += `?username=${encodeURIComponent(input)}`;
 
-      responseEl.textContent = "⏳ Loading...";
+      responseEl.innerHTML = "⏳ Loading...";
 
       try {
         const res = await fetch(url);
-        const type = res.headers.get("content-type") || "";
-        let data;
-        if (type.includes("application/json")) data = await res.json();
-        else data = await res.text();
+        const data = await res.json();
 
         if (!res.ok) {
           responseEl.textContent = `❌ Error ${res.status}\n${JSON.stringify(data, null, 2)}`;
+          return;
+        }
+
+        // Render tampilan rapi
+        if (service === "tiktok" && data.result?.user) {
+          const u = data.result.user;
+          const s = data.result.stats;
+          responseEl.innerHTML = `
+            <div class="flex items-center gap-4">
+              <img src="${u.avatarThumb}" class="w-16 h-16 rounded-full border" alt="">
+              <div>
+                <h3 class="font-bold text-lg">${u.nickname}</h3>
+                <p class="text-gray-500">@${u.uniqueId}</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-4 mt-4 text-center">
+              <div><span class="font-bold text-lg">${s.followerCount}</span><br><span class="text-sm text-gray-500">Followers</span></div>
+              <div><span class="font-bold text-lg">${s.followingCount}</span><br><span class="text-sm text-gray-500">Following</span></div>
+              <div><span class="font-bold text-lg">${s.heartCount}</span><br><span class="text-sm text-gray-500">Likes</span></div>
+            </div>
+            <p class="mt-4 text-gray-700">${u.signature || "-"}</p>
+          `;
+        } else if (service === "roblox" && data.result?.account) {
+          const a = data.result.account;
+          const s = data.result.stats;
+          responseEl.innerHTML = `
+            <div class="flex items-center gap-4">
+              <img src="${a.profilePicture}" class="w-16 h-16 rounded-full border" alt="">
+              <div>
+                <h3 class="font-bold text-lg">${a.displayName}</h3>
+                <p class="text-gray-500">@${a.username}</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-4 mt-4 text-center">
+              <div><span class="font-bold text-lg">${s.friendCount}</span><br><span class="text-sm text-gray-500">Friends</span></div>
+              <div><span class="font-bold text-lg">${s.followers}</span><br><span class="text-sm text-gray-500">Followers</span></div>
+              <div><span class="font-bold text-lg">${s.following}</span><br><span class="text-sm text-gray-500">Following</span></div>
+            </div>
+            <p class="mt-4 text-gray-700">${a.description || "-"}</p>
+          `;
         } else {
           responseEl.textContent = JSON.stringify(data, null, 2);
         }
@@ -120,14 +150,6 @@ Belum ada response...
     function resetForm() {
       inputValue.value = "";
       responseEl.textContent = "Belum ada response...";
-    }
-
-    function copyResponse() {
-      const text = responseEl.textContent;
-      navigator.clipboard.writeText(text).then(() => {
-        copyBtn.textContent = "✔ Disalin";
-        setTimeout(() => (copyBtn.textContent = "Salin"), 1500);
-      });
     }
   </script>
 </body>
